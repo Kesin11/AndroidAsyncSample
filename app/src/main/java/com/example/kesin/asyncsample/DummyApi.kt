@@ -4,13 +4,13 @@ package com.example.kesin.asyncsample
  * Created by kesin on 2018/02/09.
  */
 class DummyApi {
-    fun fetchThree(): String {
+    fun fetchThree(message: String): String {
         Thread.sleep(3000)
-        return "Done!"
+        return message + " Done!"
     }
 
-    fun fetchFive(): String {
+    fun fetchFive(message: String): String {
         Thread.sleep(5000)
-        return "Done!"
+        return message + " Done!"
     }
 }

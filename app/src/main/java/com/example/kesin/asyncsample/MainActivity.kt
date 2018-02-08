@@ -27,9 +27,9 @@ class MainActivity : AppCompatActivity() {
 
         callbackButton.setOnClickListener {
             renderBegin()
-            processCallback {
+            processCallback { result ->
                 runOnUiThread {
-                    renderFinish()
+                    renderFinish(result)
                 }
             }
         }
@@ -40,20 +40,16 @@ class MainActivity : AppCompatActivity() {
         progressBar.visibility = View.VISIBLE
     }
 
-    fun renderFinish() {
-        message.text = "Done!"
+    fun renderFinish(result: String) {
+        message.text = result
         progressBar.visibility = View.INVISIBLE
     }
 
-    fun processCallback(callback: () -> Unit) {
+    fun processCallback(callback: (String) -> Unit) {
         val thread = Thread({
-            api.fetchThree()
-            callback.invoke()
+            val result = api.fetchThree("callback")
+            callback.invoke(result)
         })
         thread.start()
     }
-}
-
-private operator fun Unit.invoke() {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 }
