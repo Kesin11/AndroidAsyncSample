@@ -6,6 +6,12 @@ import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
+import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
+import io.reactivex.Scheduler
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 
 class MainActivity : AppCompatActivity() {
     lateinit var callbackButton: Button
@@ -32,6 +38,22 @@ class MainActivity : AppCompatActivity() {
                     renderFinish(result)
                 }
             }
+        }
+
+        rxButton.setOnClickListener {
+            Observable.create( ObservableOnSubscribe<String> { subscriber ->
+                // ここがioスレッドで実行される
+                val result = api.fetchFive("Rx")
+                subscriber.onNext(result)
+            })
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe  { result ->
+                // こっちがmainスレッドで実行される
+                renderFinish(result)
+            }
+
+            renderBegin()
         }
     }
 
