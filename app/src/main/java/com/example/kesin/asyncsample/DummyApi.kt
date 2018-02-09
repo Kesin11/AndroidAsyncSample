@@ -6,11 +6,11 @@ package com.example.kesin.asyncsample
 class DummyApi {
     fun fetchThree(message: String): String {
         Thread.sleep(3000)
-        return message + " Done!"
+        return "$message Done!"
     }
 
     fun fetchFive(message: String): String {
         Thread.sleep(5000)
-        return message + " Done!"
+        return "$message Done!"
     }
 }
