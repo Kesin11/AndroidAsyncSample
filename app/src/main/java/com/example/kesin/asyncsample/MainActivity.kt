@@ -17,6 +17,7 @@ import java.lang.System.currentTimeMillis
 
 class MainActivity : AppCompatActivity() {
     lateinit var callbackButton: Button
+    lateinit var callbackSerialButton: Button
     lateinit var rxButton: Button
     lateinit var asynctButton: Button
     lateinit var suspendButton: Button
@@ -30,6 +31,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         callbackButton = findViewById<Button>(R.id.callback_button)
+        callbackSerialButton = findViewById<Button>(R.id.callback_s_button)
         rxButton = findViewById<Button>(R.id.rx_button)
         asynctButton = findViewById<Button>(R.id.async_button)
         suspendButton = findViewById<Button>(R.id.suspend_button)
@@ -38,9 +40,18 @@ class MainActivity : AppCompatActivity() {
 
         callbackButton.setOnClickListener {
             renderBegin()
-            processCallback { result ->
+            CallbackStyle.single {
                 runOnUiThread {
-                    renderFinish(result)
+                    renderFinish(it)
+                }
+            }
+        }
+
+        callbackSerialButton.setOnClickListener {
+            renderBegin()
+            CallbackStyle.serial {
+                runOnUiThread {
+                    renderFinish(it)
                 }
             }
         }
@@ -48,7 +59,7 @@ class MainActivity : AppCompatActivity() {
         rxButton.setOnClickListener {
             Observable.create( ObservableOnSubscribe<String> { subscriber ->
                 // ここがioスレッドで実行される
-                val result = api.fetchFive("Rx")
+                val result = DummyApi.fetchFive("Rx")
                 subscriber.onNext(result)
             })
             .subscribeOn(Schedulers.io())
@@ -66,7 +77,7 @@ class MainActivity : AppCompatActivity() {
             launch(UI) {
                 // asyncはawaitが必要
                 val task = async {
-                    return@async api.fetchThree("async")
+                    return@async DummyApi.fetchThree("async")
                 }
                 val result = task.await()
                 renderFinish(result)
@@ -95,16 +106,8 @@ class MainActivity : AppCompatActivity() {
         progressBar.visibility = View.INVISIBLE
     }
 
-    fun processCallback(callback: (String) -> Unit) {
-        val thread = Thread({
-            val result = api.fetchThree("callback")
-            callback.invoke(result)
-        })
-        thread.start()
-    }
-
     suspend fun processAsync(): String {
-        return api.fetchThree("suspend")
+        return DummyApi.fetchThree("suspend")
 
     }
 
