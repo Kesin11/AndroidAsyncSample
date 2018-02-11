@@ -8,7 +8,7 @@ class CallbackStyle {
     companion object {
         fun single(callback: (String) -> Unit) {
             val thread = Thread({
-                val result = DummyApi.fetchThree("callback")
+                val result = DummyApi.fetchOne("callback")
                 callback.invoke(result)
             })
             thread.start()
@@ -17,7 +17,7 @@ class CallbackStyle {
         fun serial(callback: (String) -> Unit) {
             fun inner(callback: (String) -> Unit) {
                 val thread = Thread({
-                    val result = DummyApi.fetchFive("callback serial")
+                    val result = DummyApi.fetchTwo("callback serial")
                     callback.invoke(result)
                 })
                 thread.start()

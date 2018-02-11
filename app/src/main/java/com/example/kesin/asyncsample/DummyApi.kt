@@ -5,13 +5,13 @@ package com.example.kesin.asyncsample
  */
 class DummyApi {
     companion object {
-        fun fetchThree(message: String): String {
-            Thread.sleep(3000)
+        fun fetchOne(message: String): String {
+            Thread.sleep(1000)
             return "$message Done!"
         }
 
-        fun fetchFive(message: String): String {
-            Thread.sleep(5000)
+        fun fetchTwo(message: String): String {
+            Thread.sleep(2000)
             return "$message Done!"
         }
     }

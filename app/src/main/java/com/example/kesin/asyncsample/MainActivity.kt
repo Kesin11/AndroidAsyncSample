@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity() {
         rxButton.setOnClickListener {
             Observable.create( ObservableOnSubscribe<String> { subscriber ->
                 // ここがioスレッドで実行される
-                val result = DummyApi.fetchFive("Rx")
+                val result = DummyApi.fetchTwo("Rx")
                 subscriber.onNext(result)
             })
             .subscribeOn(Schedulers.io())
@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
             launch(UI) {
                 // asyncはawaitが必要
                 val task = async {
-                    return@async DummyApi.fetchThree("async")
+                    return@async DummyApi.fetchOne("async")
                 }
                 val result = task.await()
                 renderFinish(result)
@@ -107,7 +107,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     suspend fun processAsync(): String {
-        return DummyApi.fetchThree("suspend")
+        return DummyApi.fetchOne("suspend")
 
     }
 
