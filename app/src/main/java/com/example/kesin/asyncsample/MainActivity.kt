@@ -13,6 +13,7 @@ import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.launch
+import java.lang.System.currentTimeMillis
 
 class MainActivity : AppCompatActivity() {
     lateinit var callbackButton: Button
@@ -22,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var progressBar: ProgressBar
     lateinit var message: TextView
     val api = DummyApi()
+    var timeCount: Long? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,12 +84,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun renderBegin() {
+        timeCount = currentTimeMillis()
         message.text = "progress..."
         progressBar.visibility = View.VISIBLE
     }
 
     fun renderFinish(result: String) {
-        message.text = result
+        timeCount = (currentTimeMillis() - timeCount!!) / 1000
+        message.text = "$result ${timeCount}s"
         progressBar.visibility = View.INVISIBLE
     }
 
