@@ -7,8 +7,8 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.async
@@ -19,12 +19,13 @@ class MainActivity : AppCompatActivity() {
     lateinit var callbackButton: Button
     lateinit var callbackSerialButton: Button
     lateinit var rxButton: Button
+    lateinit var rxSerialButton: Button
+    lateinit var rxConcurrentButton: Button
     lateinit var asynctButton: Button
     lateinit var suspendButton: Button
     lateinit var progressBar: ProgressBar
     lateinit var message: TextView
-    val api = DummyApi()
-    var timeCount: Long? = null
+    var timerStarted: Long? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +34,8 @@ class MainActivity : AppCompatActivity() {
         callbackButton = findViewById<Button>(R.id.callback_button)
         callbackSerialButton = findViewById<Button>(R.id.callback_s_button)
         rxButton = findViewById<Button>(R.id.rx_button)
+        rxSerialButton = findViewById<Button>(R.id.rx_s_button)
+        rxConcurrentButton = findViewById<Button>(R.id.rx_c_button)
         asynctButton = findViewById<Button>(R.id.async_button)
         suspendButton = findViewById<Button>(R.id.suspend_button)
         progressBar = findViewById<ProgressBar>(R.id.progressBar)
@@ -57,17 +60,45 @@ class MainActivity : AppCompatActivity() {
         }
 
         rxButton.setOnClickListener {
-            Observable.create( ObservableOnSubscribe<String> { subscriber ->
-                // ここがioスレッドで実行される
-                val result = DummyApi.fetchTwo("Rx")
-                subscriber.onNext(result)
-            })
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe  { result ->
-                // こっちがmainスレッドで実行される
-                renderFinish(result)
-            }
+            // fetchOneは別スレッドで実行される
+            RxStyle.fetchOne("Rx")
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe  { result ->
+                    // こっちはmainスレッドで実行される
+                    renderFinish(result)
+                }
+
+            renderBegin()
+        }
+
+        rxSerialButton.setOnClickListener {
+            RxStyle.fetchOne("Rx")
+                .flatMap {
+                    RxStyle.fetchTwo("Rx")
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe  { result ->
+                    renderFinish(result)
+                }
+
+            renderBegin()
+        }
+
+        rxConcurrentButton.setOnClickListener {
+            // 単にsubscribeOn(Schedulers.io())とzipの組み合わせでは2つが別々のスレッドで実行されない
+            // https://medium.com/@Joseph82/concurrent-tasks-with-zip-operator-99773466039f
+            Observable.zip<String, String, String>(
+                RxStyle.fetchOne("Rx").subscribeOn(Schedulers.newThread()),
+                RxStyle.fetchTwo("Rx2").subscribeOn(Schedulers.newThread()),
+                BiFunction { message1, message2 ->
+                    message1
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe  { result ->
+                    renderFinish(result)
+                }
 
             renderBegin()
         }
@@ -95,13 +126,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun renderBegin() {
-        timeCount = currentTimeMillis()
+        timerStarted = currentTimeMillis()
         message.text = "progress..."
         progressBar.visibility = View.VISIBLE
     }
 
     fun renderFinish(result: String) {
-        timeCount = (currentTimeMillis() - timeCount!!) / 1000
+        var timeCount = (currentTimeMillis() - timerStarted!!) / 1000.0
         message.text = "$result ${timeCount}s"
         progressBar.visibility = View.INVISIBLE
     }
